@@ -1,0 +1,21 @@
+#!/usr/bin/env bash
+#=========================================================================
+# 07-summarize-results
+#=========================================================================
+
+# Stop on error and echo all commands
+
+set -e
+trap 'echo "CMD: $BASH_COMMAND"' DEBUG
+
+# Determine RUNDIR and TOPDIR
+
+RUNDIR="$(dirname $(readlink -f "${BASH_SOURCE[0]}"))"
+TOPDIR="$(readlink -f $RUNDIR/../../..)"
+
+cd $RUNDIR
+
+# Run script
+
+./summarize-results | tee run.log
+
