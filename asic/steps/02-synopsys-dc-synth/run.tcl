@@ -47,7 +47,7 @@ set_dont_use {
 # Inputs
 #-------------------------------------------------------------------------
 
-analyze -format sverilog $env(TOPDIR)/sim/build/{{design_name}}__pickled.v
+analyze -format sverilog {{src_dir}}/{{design_name}}__pickled.v
 elaborate {{design_name}}
 
 #-------------------------------------------------------------------------
@@ -62,9 +62,21 @@ create_clock clk -name ideal_clock1 -period {{clock_period}}
 
 set_max_transition 0.250 {{design_name}}
 
-# Set the assumed driving cell for all inputs
+# Set the assumed driving cell for all inputs. Ideally we want to use
+# something like this:
+#
+#  set_driving_cell -no_design_rule -lib_cell INV_X2 [all_inputs]
+#
+# However, using set_driving cell causes Cadence Innovus to factor in
+# a "Drive Adjustment" into its timing analysis (which is fine) but
+# then this "Drive Adjustment" is not written into the SDF file (which
+# is not fine). This can cause hold time violations in the
+# back-annotated gate-level simulation because the timing analysis
+# assumes there is a drive adjustment but there is no drive adjustment
+# in the actual simulation. So for now, we just force all input
+# transitions to be instantaneous.
 
-set_driving_cell -no_design_rule -lib_cell INV_X2 [all_inputs]
+set_input_transition 0 [all_inputs]
 
 # Set the assumed load for all outputs
 

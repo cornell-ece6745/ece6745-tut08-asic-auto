@@ -144,6 +144,10 @@ optDesign -postRoute -hold
 
 optDesign -postRoute -drv
 
+# Extract the interconnect parasitics
+
+extractRC
+
 #-------------------------------------------------------------------------
 # Finishing
 #-------------------------------------------------------------------------
@@ -169,10 +173,6 @@ saveDesign post-pnr.enc
 # Output the post-pnr gate-level netlist
 
 saveNetlist post-pnr.v
-
-# Extract the interconnect parasitics
-
-extractRC
 
 # Output the interconnect parasitics in SPEF format for power analsys
 

@@ -14,11 +14,9 @@ RED="\e[31m"
 GREEN="\e[32m"
 RESET="\e[0m"
 
-# Determine RUNDIR and TOPDIR
+# Determine RUNDIR
 
 RUNDIR="$(dirname $(readlink -f "${BASH_SOURCE[0]}"))"
-TOPDIR="$(readlink -f $RUNDIR/../../..)"
-
 cd $RUNDIR
 
 #-------------------------------------------------------------------------
@@ -33,11 +31,11 @@ function run_sim
   rm -rf $1 $1.daidir $1.log
 
   vcs -sverilog -xprop=tmerge -override_timescale=1ns/1ps -top Top \
-    +vcs+dumpvars+$1.vcd \
+    {{ "+vcs+dumpvars+$1.vcd" if dump_vcd | default(false) }} \
     -o $1 \
-    +incdir+$TOPDIR/sim/build \
-    $TOPDIR/sim/build/$1_tb.v \
-    $TOPDIR/sim/build/{{design_name}}__pickled.v | tee $1.log
+    +incdir+{{src_dir}} \
+    {{src_dir}}/$1_tb.v \
+    {{src_dir}}/{{design_name}}__pickled.v | tee $1.log
 
   ./$1 | tee -a $1.log
 

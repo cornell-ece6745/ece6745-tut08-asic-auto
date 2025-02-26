@@ -8,11 +8,9 @@
 set -e
 trap 'echo "CMD: $BASH_COMMAND"' DEBUG
 
-# Determine RUNDIR and TOPDIR
+# Determine RUNDIR
 
 RUNDIR="$(dirname $(readlink -f "${BASH_SOURCE[0]}"))"
-TOPDIR="$(readlink -f $RUNDIR/../../..)"
-
 cd $RUNDIR
 
 # Function for running one power analysis
@@ -20,6 +18,8 @@ cd $RUNDIR
 
 function run_pwr
 {
+  trap 'echo "CMD: $BASH_COMMAND"' DEBUG
+
   rm -rf $1*.rpt
 
   export EVALNAME=$1

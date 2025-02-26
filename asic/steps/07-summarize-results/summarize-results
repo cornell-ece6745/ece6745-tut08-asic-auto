@@ -158,7 +158,7 @@ def print_eval( name ):
   with open( eval_saif_file, "r" ) as file:
     for line in file:
       if line.startswith("(DURATION "):
-        exec_time_ps     = int(line.split()[1].strip(')'))
+        exec_time_ps     = float(line.split()[1].strip(')'))
         exec_time_ns     = exec_time_ps/1000.0
         exec_time_cycles = int(exec_time_ns/{{clock_period}})
 
