@@ -43,5 +43,5 @@ evals:
  - SortUnitStruct__p_nbits_8_sort-sim-rtl-struct-random
 
  # ''' TUTORIAL TASK '''''''''''''''''''''''''''''''''''''''''''''''''''''
- # Add another evalation when the inputs are all zeros
+ # Add another evaluation when the inputs are all zeros
  # '''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''

@@ -6,8 +6,18 @@
 # Initial setup
 #-------------------------------------------------------------------------
 
-set_app_var target_library "$env(ECE6745_STDCELLS)/stdcells.db"
-set_app_var link_library   "* $env(ECE6745_STDCELLS)/stdcells.db"
+# We need to include the db files for the standard cells and any
+# generated SRAMs.
+
+set db_files [list \
+  "$env(ECE6745_STDCELLS)/stdcells.db" \
+  {% for sram in srams | default([]) -%}
+  "../00-openram-memgen/{{sram}}.db" \
+  {% endfor %}
+]
+
+set_app_var target_library $db_files
+set_app_var link_library   [concat "*" $db_files]
 
 set_app_var power_enable_analysis true
 

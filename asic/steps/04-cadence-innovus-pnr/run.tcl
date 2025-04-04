@@ -6,12 +6,26 @@
 # Initial Setup
 #-------------------------------------------------------------------------
 
+# We need to include the lef files for the routing technology,
+# standard cells, and any generated SRAMs.
+
+set lef_files [list \
+  "$env(ECE6745_STDCELLS)/rtk-tech.lef" \
+  "$env(ECE6745_STDCELLS)/stdcells.lef" \
+  {% for sram in srams | default([]) -%}
+  "../00-openram-memgen/{{sram}}.lef" \
+  {% endfor %}
+]
+
 set init_mmmc_file "setup-timing.tcl"
 set init_verilog   "../02-synopsys-dc-synth/post-synth.v"
 set init_top_cell  "{{design_name}}"
-set init_lef_file  "$env(ECE6745_STDCELLS)/rtk-tech.lef $env(ECE6745_STDCELLS)/stdcells.lef"
-set init_gnd_net   "VSS"
-set init_pwr_net   "VDD"
+set init_lef_file  $lef_files
+
+# The standard cells use VDD/VSS but OpenRAM uses vdd/gnd
+
+set init_pwr_net   {VDD vdd}
+set init_gnd_net   {VSS gnd}
 
 init_design
 
@@ -47,19 +61,59 @@ set report_precision 4
 #-------------------------------------------------------------------------
 # Floorplanning
 #-------------------------------------------------------------------------
+# There are two primary floorplanning options: automatic and fixed.
+#
+# The automatic floorplan option will determine the overall dimensions
+# given a target aspect ratio and placement density. Here is an
+# example which targets an aspect ratio of 1.0 and placement density
+# of 70% with a 4um border around the outside of the core area for the
+# power ring.
+#
+#  floorPlan -r 1.0 0.70 4.0 4.0 4.0 4.0
+#
+# The fixed floorplan option uses a given width and height. Here is an
+# example which targets a width of 200um and height of 100um with a
+# 4um border around the outside of the core are for the power ring.
+#
+#  floorPlan -d 200 100 4.0 4.0 4.0 4.0
+#
 
-# Assume an aspect ratio of 1 and a target placement density of 40%.
-# Leave 4um border around the outside of the core area for the pad
-# ring.
+floorPlan {{ floorplan | default("-r 1.0 0.70 4.0 4.0 4.0 4.0") }}
 
-floorPlan -r 1.0 0.70 4.0 4.0 4.0 4.0
+#-------------------------------------------------------------------------
+# Placement
+#-------------------------------------------------------------------------
+
+# Add a small halo around all SRAMs to help with congestion
+
+addHaloToBlock 2.4 2.4 2.4 2.4 -allMacro
+
+# Place the design with preliminary routing
+
+place_design
+
+# Add tiehi/tielo cells which are used to connect constant values to
+# either vdd or ground.
+
+addTieHiLo -cell "LOGIC1_X1 LOGIC0_X1"
+
+# Try to place the input/output pins so they are close to the
+# standard-cells they are connected to
+
+assignIoPins -pin *
 
 #-------------------------------------------------------------------------
 # Power Routing
 #-------------------------------------------------------------------------
 
-globalNetConnect VDD -type pgpin -pin VDD -inst * -verbose
-globalNetConnect VSS -type pgpin -pin VSS -inst * -verbose
+globalNetConnect VDD -type pgpin -pin VDD -all -verbose
+globalNetConnect VSS -type pgpin -pin VSS -all -verbose
+
+globalNetConnect VDD -type pgpin -pin vdd -all -verbose
+globalNetConnect VSS -type pgpin -pin gnd -all -verbose
+
+globalNetConnect VDD -type tiehi -pin VDD -all -verbose
+globalNetConnect VSS -type tielo -pin VSS -all -verbose
 
 # Route the M1 tracks for each row of standard cells
 
@@ -86,19 +140,6 @@ addStripe \
   -set_to_set_distance 11.2 -start_offset 2.4
 
 #-------------------------------------------------------------------------
-# Placement
-#-------------------------------------------------------------------------
-
-# Place the design with preliminary routing
-
-place_design
-
-# Try to place the input/output pins so they are close to the
-# standard-cells they are connected to
-
-assignIoPins -pin *
-
-#-------------------------------------------------------------------------
 # Clock-Tree Synthesis
 #-------------------------------------------------------------------------
 
@@ -106,11 +147,12 @@ assignIoPins -pin *
 
 create_ccopt_clock_tree_spec
 
-# Turn off an optimization that allows Cadence Innovus to decide to
-# add non-zero clock source insertion latency. Turning this on will
-# complicate back-annotated gate-level simulation.
+# Control an optimization that allows Cadence Innovus to decide to add
+# non-zero clock insertion source latency. Turning this on will
+# complicate back-annotated gate-level simulation, but may enable
+# closing timing for larger blocks.
 
-set_ccopt_property update_io_latency false
+set_ccopt_property update_io_latency {{ update_io_latency | default("false") }}
 
 # Synthesize the clock tree
 
@@ -187,10 +229,18 @@ write_sdf post-pnr.sdf
 write_sdc post-pnr.sdc
 
 # Merge the standard-cell layout with the place and routed design to
-# stream out the final layout for the block
+# stream out the final layout for the block; note that we need to
+# include the gds files for the standard cells and any generated
+# SRAMs.
 
-streamOut post-pnr.gds \
-  -merge "$env(ECE6745_STDCELLS)/stdcells.gds" \
+set gds_files [list \
+  "$env(ECE6745_STDCELLS)/stdcells.gds" \
+  {% for sram in srams | default([]) -%}
+  "../00-openram-memgen/{{sram}}.gds" \
+  {% endfor %}
+]
+
+streamOut post-pnr.gds -merge $gds_files \
   -mapFile "$env(ECE6745_STDCELLS)/rtk-stream-out.map"
 
 # Report the critical path (i.e., setup-time constraint)

@@ -34,8 +34,8 @@ function run_sim
     {{ "+vcs+dumpvars+$1.vcd" if dump_vcd | default(false) }} \
     -o $1 \
     +incdir+{{src_dir}} \
-    {{src_dir}}/$1_tb.v \
-    {{src_dir}}/{{design_name}}__pickled.v | tee $1.log
+    {{src_dir}}/{{design_name}}__pickled.v \
+    {{src_dir}}/$1_tb.v | tee $1.log
 
   ./$1 | tee -a $1.log
 

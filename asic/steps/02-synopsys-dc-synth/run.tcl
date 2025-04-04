@@ -6,12 +6,22 @@
 # Initial setup
 #-------------------------------------------------------------------------
 
-set_app_var target_library "$env(ECE6745_STDCELLS)/stdcells.db"
-set_app_var link_library   "* $env(ECE6745_STDCELLS)/stdcells.db"
+# We need to include the db files for the standard cells and any
+# generated SRAMs.
 
-# Use global alib cache for faster runs
+set db_files [list \
+  "$env(ECE6745_STDCELLS)/stdcells.db" \
+  {% for sram in srams | default([]) -%}
+  "../00-openram-memgen/{{sram}}.db" \
+  {% endfor %}
+]
 
-set_app_var alib_library_analysis_path "$env(ECE6745_STDCELLS)/stdcells.alib"
+set_app_var target_library $db_files
+set_app_var link_library   [concat "*" $db_files]
+
+# Use alib cache for faster runs
+
+set_app_var alib_library_analysis_path alib
 
 # Increase the number of significant digits in reports
 
