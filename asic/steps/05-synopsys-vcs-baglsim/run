@@ -24,8 +24,8 @@ cd $RUNDIR
 #-------------------------------------------------------------------------
 
 SRAM_VERILOG_FILES=""
-{% for sram in srams -%}
-SRAM_VERILOG_FILES+="../00-openram-memgen/{{sram}}.v"
+{% for sram in srams | default([]) -%}
+SRAM_VERILOG_FILES+="../00-openram-memgen/{{sram}}.v "
 {% endfor %}
 
 #-------------------------------------------------------------------------

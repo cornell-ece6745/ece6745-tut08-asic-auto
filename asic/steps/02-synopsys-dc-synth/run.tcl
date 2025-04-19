@@ -9,15 +9,15 @@
 # We need to include the db files for the standard cells and any
 # generated SRAMs.
 
-set db_files [list \
+set_app_var target_library [list \
   "$env(ECE6745_STDCELLS)/stdcells.db" \
   {% for sram in srams | default([]) -%}
   "../00-openram-memgen/{{sram}}.db" \
   {% endfor %}
 ]
 
-set_app_var target_library $db_files
-set_app_var link_library   [concat "*" $db_files]
+set_app_var synthetic_library dw_foundation.sldb
+set_app_var link_library [concat "*" $target_library $synthetic_library]
 
 # Use alib cache for faster runs
 
@@ -40,9 +40,9 @@ set compile_seqmap_honor_sync_set_reset true
 
 set_svf -off
 
-# Don't use scan flipflops
+# Don't use scan flipflops or scan clock-gating cells
 
-set_dont_use {
+set_dont_use -power {
   NangateOpenCellLibrary/SDFF_X1
   NangateOpenCellLibrary/SDFF_X2
   NangateOpenCellLibrary/SDFFS_X1
@@ -51,6 +51,10 @@ set_dont_use {
   NangateOpenCellLibrary/SDFFR_X2
   NangateOpenCellLibrary/SDFFRS_X1
   NangateOpenCellLibrary/SDFFRS_X2
+  NangateOpenCellLibrary/CLKGATETST_X1
+  NangateOpenCellLibrary/CLKGATETST_X2
+  NangateOpenCellLibrary/CLKGATETST_X4
+  NangateOpenCellLibrary/CLKGATETST_X8
 }
 
 #-------------------------------------------------------------------------
@@ -107,6 +111,17 @@ set_output_delay -clock ideal_clock1 -min 0     [all_outputs]
 
 set_max_delay {{clock_period}} -from [all_inputs -exclude_clock_ports] -to [all_outputs]
 
+{% if retiming is defined %}
+# Register retiming
+
+{% endif %}
+{% for module in retiming | default([]) -%}
+set_optimize_registers true \
+  -design {{module}}  \
+  -check_design -verbose -print_critical_loop \
+  -clock ideal_clock1 -delay_threshold {{clock_period}}
+
+{% endfor %}
 # Check all timing constraints to make sure there are no issues
 
 check_timing

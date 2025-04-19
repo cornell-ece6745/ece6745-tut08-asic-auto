@@ -1,6 +1,20 @@
 #=========================================================================
 # tut08-gcd
 #=========================================================================
+# These are the steps required to generate the Verilog and
+# corresponding Verilog test benches.
+#  
+#  % mkdir -p $TOPIDR/sim/build
+#  % cd $TOPIDR/sim/build
+#  % pytest ../tut3_verilog/gcd/test --test-verilog --dump-vtb
+#
+#  % ../tut3_verilog/gcd/gcd-sim --impl rtl --input random \
+#      --stats --translate --dump-vtb
+#  % ../tut3_verilog/gcd/gcd-sim --impl rtl --input small \
+#      --stats --translate --dump-vtb
+#  % ../tut3_verilog/gcd/gcd-sim --impl rtl --input zeros \
+#      --stats --translate --dump-vtb
+#
 
 #-------------------------------------------------------------------------
 # steps
